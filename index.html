@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .check-in {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .check-out {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .offline-badge {
+            display: none;
+            background-color: #fff3e0;
+            color: #ef6c00;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #registrationForm {
+            display: none;
+        }
+
+        #mainInterface {
+            display: none;
+        }
+
+        .welcome-text {
+            margin-bottom: 15px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance System</h1>
+        
+        <!-- Registration Form -->
+        <div id="registrationForm">
+            <div class="input-group">
+                <input type="text" id="empId" placeholder="Employee ID" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="empName" placeholder="Full Name" required>
+            </div>
+            <button onclick="registerEmployee()" class="check-in" style="width: 100%">Register</button>
+        </div>
+
+        <!-- Main Interface -->
+        <div id="mainInterface">
+            <div id="offlineBadge" class="offline-badge">
+                You are currently offline. Data will be synced when online.
+            </div>
+            <div class="welcome-text" id="welcomeText"></div>
+            <div class="input-group">
+                <textarea id="note" placeholder="Add a note (optional)" rows="3"></textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="handleAttendance('Check-in')" class="check-in" id="checkInBtn">Check In</button>
+                <button onclick="handleAttendance('Check-out')" class="check-out" id="checkOutBtn">Check Out</button>
+            </div>
+            <div id="errorAlert" class="alert error"></div>
+            <div id="successAlert" class="alert success"></div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const API_ENDPOINT = 'https://hooks.airtable.com/workflows/v1/genericWebhook/app2mqErcba8RyeQ6/wflOwiEWJg121NYgx/wtrYwXAQnh4UPBdyH';
+        const STORAGE_KEYS = {
+            EMPLOYEE_ID: 'employeeId',
+            EMPLOYEE_NAME: 'employeeName',
+            LAST_ACTION: 'lastAction',
+            OFFLINE_DATA: 'offlineData'
+        };
+
+        // Sample branch locations (would be loaded from JSON in production)
+        const BRANCH_LOCATIONS = [
+            { name: 'Head Office', lat: 30.0257632, lng: 31.487376, radius: 100 },
+            { name: 'Branch A', lat: 30.0257632, lng:31.487376, radius: 100 }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            setupOfflineDetection();
+        });
+
+        // Check if user is already registered
+        function checkLoginStatus() {
+            const savedId = localStorage.getItem(STORAGE_KEYS.EMPLOYEE_ID);
+            const savedName = localStorage.getItem(STORAGE_KEYS.EMPLOYEE_NAME);
+
+            if (savedId && savedName) {
+                showMainInterface(savedId, savedName);
+            } else {
+                document.getElementById('registrationForm').style.display = 'block';
+            }
+        }
+
+        // Handle employee registration
+        function registerEmployee() {
+            const empId = document.getElementById('empId').value.trim();
+            const empName = document.getElementById('empName').value.trim();
+
+            if (!empId || !empName) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            localStorage.setItem(STORAGE_KEYS.EMPLOYEE_ID, empId);
+            localStorage.setItem(STORAGE_KEYS.EMPLOYEE_NAME, empName);
+            showMainInterface(empId, empName);
+        }
+
+        // Show main interface after registration
+        function showMainInterface(empId, empName) {
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('mainInterface').style.display = 'block';
+            document.getElementById('welcomeText').textContent = `Welcome, ${empName} (${empId})`;
+        }
+
+        // Handle offline detection
+        function setupOfflineDetection() {
+            function updateOnlineStatus() {
+                document.getElementById('offlineBadge').style.display = 
+                    navigator.onLine ? 'none' : 'block';
+            }
+
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+        }
+
+        // Get current location
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation is not supported'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    position => resolve(position.coords),
+                    error => {
+                        if (error.code === error.PERMISSION_DENIED) {
+                            reject(new Error('Please enable location access in your browser settings to use this feature.'));
+                        } else {
+                            reject(error);
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000, // Increase timeout to 10 seconds
+                        maximumAge: 0
+                    }
+                );
+            });
+        }
+
+        // Calculate distance between two points
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = (lat1 * Math.PI) / 180;
+            const φ2 = (lat2 * Math.PI) / 180;
+            const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+            const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c;
+        }
+
+        // Check if location is valid
+        function isLocationValid(userLat, userLng) {
+            return BRANCH_LOCATIONS.some(branch => {
+                const distance = calculateDistance(
+                    userLat,
+                    userLng,
+                    branch.lat,
+                    branch.lng
+                );
+                return distance <= branch.radius;
+            });
+        }
+
+        // Get current branch based on location
+        function getCurrentBranch(lat, lng) {
+            return BRANCH_LOCATIONS.find(branch => {
+                const distance = calculateDistance(lat, lng, branch.lat, branch.lng);
+                return distance <= branch.radius;
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successAlert = document.getElementById('successAlert');
+            successAlert.textContent = message;
+            successAlert.style.display = 'block';
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle attendance submission
+        async function handleAttendance(type) {
+            try {
+                // Disable buttons during processing
+                document.getElementById('checkInBtn').disabled = true;
+                document.getElementById('checkOutBtn').disabled = true;
+
+                // Get current location
+                const coords = await getCurrentLocation();
+                if (!isLocationValid(coords.latitude, coords.longitude)) {
+                    throw new Error('You are not within any authorized location');
+                }
+
+                const branch = getCurrentBranch(coords.latitude, coords.longitude);
+                const timestamp = new Date();
+                const data = {
+                    idNumber: localStorage.getItem(STORAGE_KEYS.EMPLOYEE_ID),
+                    name: localStorage.getItem(STORAGE_KEYS.EMPLOYEE_NAME),
+                    date: timestamp.toISOString().split('T')[0],
+                    time: timestamp.toLocaleTimeString('en-US', { hour12: false }),
+                    deviceIp: '0.0.0.0', // In production, this would be fetched
+                    locationName: branch.name,
+                    type,
+                    note: document.getElementById('note').value.trim()
+                };
+
+                if (!navigator.onLine) {
+                    // Store offline data
+                    const offlineData = JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_DATA) || '[]');
+                    offlineData.push(data);
+                    localStorage.setItem(STORAGE_KEYS.OFFLINE_DATA, JSON.stringify(offlineData));
+                    showSuccess('Data saved offline. Will sync when online.');
+                } else {
+                    // Send to API
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) throw new Error('Failed to submit attendance');
+                    showSuccess(`${type} recorded successfully!`);
+                }
+
+                localStorage.setItem(STORAGE_KEYS.LAST_ACTION, type);
+                document.getElementById('note').value = '';
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                // Re-enable buttons
+                document.getElementById('checkInBtn').disabled = false;
+                document.getElementById('checkOutBtn').disabled = false;
+            }
+        }
+
+        // Sync offline data when online
+        window.addEventListener('online', async () => {
+            const offlineData = JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_DATA) || '[]');
+            if (offlineData.length === 0) return;
+
+            try {
+                for (const data of offlineData) {
+                    await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                localStorage.setItem(STORAGE_KEYS.OFFLINE_DATA, '[]');
+                showSuccess('Offline data synced successfully!');
+            } catch (err) {
+                showError('Failed to sync some offline data');
+            }
+        });
+    getCurrentLocation();
+    </script>
+</body>
+</html>
