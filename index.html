@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Attendance System</title>
+    <title>نظام تسجيل الحضور</title>
     <style>
         * {
             margin: 0;
@@ -120,31 +120,31 @@
 </head>
 <body>
     <div class="container">
-        <h1>Attendance System</h1>
+        <h1>نظام تسجيل الحضور</h1>
         
-        <!-- Registration Form -->
+        <!-- نموذج التسجيل -->
         <div id="registrationForm">
             <div class="input-group">
-                <input type="text" id="empId" placeholder="Employee ID" required>
+                <input type="text" id="empId" placeholder="رقم الموظف" required>
             </div>
             <div class="input-group">
-                <input type="text" id="empName" placeholder="Full Name" required>
+                <input type="text" id="empName" placeholder="الاسم الكامل" required>
             </div>
-            <button onclick="registerEmployee()" class="check-in" style="width: 100%">Register</button>
+            <button onclick="registerEmployee()" class="check-in" style="width: 100%">تسجيل</button>
         </div>
 
-        <!-- Main Interface -->
+        <!-- الواجهة الرئيسية -->
         <div id="mainInterface">
             <div id="offlineBadge" class="offline-badge">
-                You are currently offline. Data will be synced when online.
+                أنت غير متصل بالإنترنت. سيتم مزامنة البيانات عند الاتصال.
             </div>
             <div class="welcome-text" id="welcomeText"></div>
             <div class="input-group">
-                <textarea id="note" placeholder="Add a note (optional)" rows="3"></textarea>
+                <textarea id="note" placeholder="إضافة ملاحظة (اختياري)" rows="3"></textarea>
             </div>
             <div class="button-group">
-                <button onclick="handleAttendance('Check-in')" class="check-in" id="checkInBtn">Check In</button>
-                <button onclick="handleAttendance('Check-out')" class="check-out" id="checkOutBtn">Check Out</button>
+                <button onclick="handleAttendance('Check-in')" class="check-in" id="checkInBtn">تسجيل الحضور</button>
+                <button onclick="handleAttendance('Check-out')" class="check-out" id="checkOutBtn">تسجيل الانصراف</button>
             </div>
             <div id="errorAlert" class="alert error"></div>
             <div id="successAlert" class="alert success"></div>
@@ -152,7 +152,7 @@
     </div>
 
     <script>
-        // Constants
+        // الثوابت
         const API_ENDPOINT = 'https://hooks.airtable.com/workflows/v1/genericWebhook/app2mqErcba8RyeQ6/wflOwiEWJg121NYgx/wtrYwXAQnh4UPBdyH';
         const STORAGE_KEYS = {
             EMPLOYEE_ID: 'employeeId',
@@ -161,19 +161,19 @@
             OFFLINE_DATA: 'offlineData'
         };
 
-        // Sample branch locations (would be loaded from JSON in production)
+        // مواقع الفروع
         const BRANCH_LOCATIONS = [
-            { name: 'Head Office', lat: 30.0257632, lng: 31.487376, radius: 100 },
-            { name: 'Branch A', lat: 30.0257632, lng:31.487376, radius: 100 }
+            { name: 'المكتب الرئيسي', lat: 30.0257632, lng: 31.487376, radius: 100 },
+            { name: 'الفرع الأول', lat: 30.0257632, lng: 31.487376, radius: 100 }
         ];
 
-        // Initialize the application
+        // تهيئة التطبيق
         document.addEventListener('DOMContentLoaded', () => {
             checkLoginStatus();
             setupOfflineDetection();
         });
 
-        // Check if user is already registered
+        // التحقق من حالة تسجيل الدخول
         function checkLoginStatus() {
             const savedId = localStorage.getItem(STORAGE_KEYS.EMPLOYEE_ID);
             const savedName = localStorage.getItem(STORAGE_KEYS.EMPLOYEE_NAME);
@@ -185,13 +185,13 @@
             }
         }
 
-        // Handle employee registration
+        // تسجيل الموظف
         function registerEmployee() {
             const empId = document.getElementById('empId').value.trim();
             const empName = document.getElementById('empName').value.trim();
 
             if (!empId || !empName) {
-                showError('Please fill in all fields');
+                showError('يرجى ملء جميع الحقول');
                 return;
             }
 
@@ -200,14 +200,14 @@
             showMainInterface(empId, empName);
         }
 
-        // Show main interface after registration
+        // عرض الواجهة الرئيسية بعد التسجيل
         function showMainInterface(empId, empName) {
             document.getElementById('registrationForm').style.display = 'none';
             document.getElementById('mainInterface').style.display = 'block';
-            document.getElementById('welcomeText').textContent = `Welcome, ${empName} (${empId})`;
+            document.getElementById('welcomeText').textContent = `مرحبًا، ${empName} (${empId})`;
         }
 
-        // Handle offline detection
+        // الكشف عن حالة الاتصال
         function setupOfflineDetection() {
             function updateOnlineStatus() {
                 document.getElementById('offlineBadge').style.display = 
@@ -219,11 +219,11 @@
             updateOnlineStatus();
         }
 
-        // Get current location
+        // الحصول على الموقع الحالي
         function getCurrentLocation() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
-                    reject(new Error('Geolocation is not supported'));
+                    reject(new Error('الموقع الجغرافي غير مدعوم'));
                     return;
                 }
 
@@ -231,23 +231,23 @@
                     position => resolve(position.coords),
                     error => {
                         if (error.code === error.PERMISSION_DENIED) {
-                            reject(new Error('Please enable location access in your browser settings to use this feature.'));
+                            reject(new Error('يرجى تمكين الوصول إلى الموقع من إعدادات المتصفح.'));
                         } else {
                             reject(error);
                         }
                     },
                     {
                         enableHighAccuracy: true,
-                        timeout: 10000, // Increase timeout to 10 seconds
+                        timeout: 10000,
                         maximumAge: 0
                     }
                 );
             });
         }
 
-        // Calculate distance between two points
+        // حساب المسافة بين نقطتين
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Earth's radius in meters
+            const R = 6371e3; // نصف قطر الأرض بالأمتار
             const φ1 = (lat1 * Math.PI) / 180;
             const φ2 = (lat2 * Math.PI) / 180;
             const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -261,7 +261,7 @@
             return R * c;
         }
 
-        // Check if location is valid
+        // التحقق من صحة الموقع
         function isLocationValid(userLat, userLng) {
             return BRANCH_LOCATIONS.some(branch => {
                 const distance = calculateDistance(
@@ -274,7 +274,7 @@
             });
         }
 
-        // Get current branch based on location
+        // الحصول على الفرع الحالي بناءً على الموقع
         function getCurrentBranch(lat, lng) {
             return BRANCH_LOCATIONS.find(branch => {
                 const distance = calculateDistance(lat, lng, branch.lat, branch.lng);
@@ -282,7 +282,7 @@
             });
         }
 
-        // Show error message
+        // عرض رسالة خطأ
         function showError(message) {
             const errorAlert = document.getElementById('errorAlert');
             errorAlert.textContent = message;
@@ -292,7 +292,7 @@
             }, 5000);
         }
 
-        // Show success message
+        // عرض رسالة نجاح
         function showSuccess(message) {
             const successAlert = document.getElementById('successAlert');
             successAlert.textContent = message;
@@ -302,48 +302,44 @@
             }, 5000);
         }
 
-        // Handle attendance submission
+        // تسجيل الحضور أو الانصراف
         async function handleAttendance(type) {
             try {
-                // Disable buttons during processing
                 document.getElementById('checkInBtn').disabled = true;
                 document.getElementById('checkOutBtn').disabled = true;
 
-                // Get current location
                 const coords = await getCurrentLocation();
                 if (!isLocationValid(coords.latitude, coords.longitude)) {
-                    throw new Error('You are not within any authorized location');
+                    throw new Error('أنت غير موجود في موقع معتمد');
                 }
 
                 const branch = getCurrentBranch(coords.latitude, coords.longitude);
                 const timestamp = new Date();
-                const data = {
-                    idNumber: localStorage.getItem(STORAGE_KEYS.EMPLOYEE_ID),
-                    name: localStorage.getItem(STORAGE_KEYS.EMPLOYEE_NAME),
-                    date: timestamp.toISOString().split('T')[0],
-                    time: timestamp.toLocaleTimeString('en-US', { hour12: false }),
-                    deviceIp: '0.0.0.0', // In production, this would be fetched
-                     branch: branch.name,
-                    type,
-                    note: document.getElementById('note').value.trim()
-                };
+                
+                // إنشاء FormData
+                const formData = new FormData();
+                formData.append('idNumber', localStorage.getItem(STORAGE_KEYS.EMPLOYEE_ID));
+                formData.append('name', localStorage.getItem(STORAGE_KEYS.EMPLOYEE_NAME));
+                formData.append('date', timestamp.toISOString().split('T')[0]);
+                formData.append('time', timestamp.toLocaleTimeString('en-US', { hour12: false }));
+                formData.append('deviceIp', '0.0.0.0');
+                formData.append('locationName', branch.name);
+                formData.append('type', type);
+                formData.append('note', document.getElementById('note').value.trim());
 
                 if (!navigator.onLine) {
-                    // Store offline data
                     const offlineData = JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_DATA) || '[]');
-                    offlineData.push(data);
+                    offlineData.push(Object.fromEntries(formData));
                     localStorage.setItem(STORAGE_KEYS.OFFLINE_DATA, JSON.stringify(offlineData));
-                    showSuccess('Data saved offline. Will sync when online.');
+                    showSuccess('تم حفظ البيانات محليًا. سيتم المزامنة عند الاتصال.');
                 } else {
-                    // Send to API
                     const response = await fetch(API_ENDPOINT, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
+                        body: formData
                     });
 
-                    if (!response.ok) throw new Error('Failed to submit attendance');
-                    showSuccess(`${type} recorded successfully!`);
+                    if (!response.ok) throw new Error('فشل في تسجيل الحضور');
+                    showSuccess(`تم تسجيل ${type === 'Check-in' ? 'الحضور' : 'الانصراف'} بنجاح!`);
                 }
 
                 localStorage.setItem(STORAGE_KEYS.LAST_ACTION, type);
@@ -351,32 +347,33 @@
             } catch (err) {
                 showError(err.message);
             } finally {
-                // Re-enable buttons
                 document.getElementById('checkInBtn').disabled = false;
                 document.getElementById('checkOutBtn').disabled = false;
             }
         }
 
-        // Sync offline data when online
+        // مزامنة البيانات عند الاتصال
         window.addEventListener('online', async () => {
             const offlineData = JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_DATA) || '[]');
             if (offlineData.length === 0) return;
 
             try {
                 for (const data of offlineData) {
+                    const formData = new FormData();
+                    for (const key in data) {
+                        formData.append(key, data[key]);
+                    }
                     await fetch(API_ENDPOINT, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
+                        body: formData
                     });
                 }
                 localStorage.setItem(STORAGE_KEYS.OFFLINE_DATA, '[]');
-                showSuccess('Offline data synced successfully!');
+                showSuccess('تم مزامنة البيانات بنجاح!');
             } catch (err) {
-                showError('Failed to sync some offline data');
+                showError('فشل في مزامنة بعض البيانات');
             }
         });
-    getCurrentLocation();
     </script>
 </body>
 </html>
