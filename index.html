@@ -323,7 +323,7 @@
                     date: timestamp.toISOString().split('T')[0],
                     time: timestamp.toLocaleTimeString('en-US', { hour12: false }),
                     deviceIp: '0.0.0.0', // In production, this would be fetched
-                    locationName: branch.name,
+                     branch: branch.name,
                     type,
                     note: document.getElementById('note').value.trim()
                 };
